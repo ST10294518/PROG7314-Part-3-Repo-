@@ -1,0 +1,1728 @@
+===== SETTINGS FILES =====
+
+===== SettingsScreen.kt =====
+package com.winx.app.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.RestoreFromTrash
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+
+private val WinxPink = Color(0xFFF4B8D0)
+private val WinxBlue = Color(0xFF12A4D0)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(
+    onBack: () -> Unit,
+    onProfileClick: () -> Unit,
+    onLanguageClick: () -> Unit,
+    onRecentlyDeletedClick: () -> Unit,
+    onSecurityClick: () -> Unit,
+    onNotificationsClick: () -> Unit,
+    onAboutUsClick: () -> Unit,
+    onLogout: () -> Unit
+) {
+
+    Scaffold(
+
+        topBar = {
+
+            TopAppBar(
+
+                title = {
+
+                    Text(
+                        text = "Settings",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+
+                navigationIcon = {
+
+                    IconButton(
+                        onClick = onBack
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+
+    ) { paddingValues ->
+
+        Column(
+
+            modifier = Modifier
+                .fillMaxSize()
+                .background(WinxPink)
+                .padding(paddingValues)
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 16.dp
+                ),
+
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            // -----------------------------------------------------
+            // SETTINGS TITLE
+            // -----------------------------------------------------
+
+            Text(
+                text = "Settings",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "Manage your Winx preferences.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
+
+
+            // -----------------------------------------------------
+            // PROFILE
+            // -----------------------------------------------------
+
+            SettingsItem(
+                icon = Icons.Default.Person,
+                title = "Profile",
+                description = "View and manage your personal information.",
+                onClick = onProfileClick
+            )
+
+
+            // -----------------------------------------------------
+            // LANGUAGE
+            // -----------------------------------------------------
+
+            SettingsItem(
+                icon = Icons.Default.Language,
+                title = "Language",
+                description = "Choose your preferred language.",
+                onClick = onLanguageClick
+            )
+
+
+            // -----------------------------------------------------
+            // RECENTLY DELETED
+            // -----------------------------------------------------
+
+            SettingsItem(
+                icon = Icons.Default.RestoreFromTrash,
+                title = "Recently Deleted",
+                description = "View and restore recently deleted items.",
+                onClick = onRecentlyDeletedClick
+            )
+
+
+            // -----------------------------------------------------
+            // SECURITY
+            // -----------------------------------------------------
+
+            SettingsItem(
+                icon = Icons.Default.Lock,
+                title = "Security",
+                description = "Manage your security and privacy settings.",
+                onClick = onSecurityClick
+            )
+
+
+            // -----------------------------------------------------
+            // NOTIFICATIONS
+            // -----------------------------------------------------
+
+            SettingsItem(
+                icon = Icons.Default.Notifications,
+                title = "Notifications",
+                description = "View and manage your notifications.",
+                onClick = onNotificationsClick
+            )
+
+
+            // -----------------------------------------------------
+            // ABOUT US
+            // -----------------------------------------------------
+
+            SettingsItem(
+                icon = Icons.Default.Info,
+                title = "About Us",
+                description = "Learn more about Winx and our mission.",
+                onClick = onAboutUsClick
+            )
+
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+
+            // -----------------------------------------------------
+            // LOG OUT
+            // -----------------------------------------------------
+
+            OutlinedButton(
+
+                onClick = onLogout,
+
+                modifier = Modifier.fillMaxWidth(),
+
+                shape = RoundedCornerShape(24.dp)
+
+            ) {
+
+                Text(
+                    text = "Log Out",
+                    color = WinxBlue,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+
+// =================================================================
+// SETTINGS ITEM
+// =================================================================
+
+@Composable
+private fun SettingsItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    description: String,
+    onClick: () -> Unit
+) {
+
+    Card(
+
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                onClick()
+            },
+
+        shape = RoundedCornerShape(8.dp),
+
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        )
+    ) {
+
+        Row(
+
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            // -----------------------------------------------------
+            // ICON
+            // -----------------------------------------------------
+
+            Icon(
+
+                imageVector = icon,
+
+                contentDescription = title,
+
+                tint = WinxBlue,
+
+                modifier = Modifier.size(28.dp)
+            )
+
+
+            Spacer(
+                modifier = Modifier.size(12.dp)
+            )
+
+
+            // -----------------------------------------------------
+            // TEXT
+            // -----------------------------------------------------
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+
+            // -----------------------------------------------------
+            // ARROW
+            // -----------------------------------------------------
+
+            Icon(
+
+                imageVector = Icons.Default.ChevronRight,
+
+                contentDescription = "Open $title"
+            )
+        }
+    }
+}
+
+===== ProfileScreen.kt =====
+package com.winx.app.screens
+
+import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileScreen(
+    onBack: () -> Unit
+) {
+
+    val context = LocalContext.current
+
+    val preferences = remember {
+        context.getSharedPreferences(
+            "winx_profile",
+            Context.MODE_PRIVATE
+        )
+    }
+
+    val user = FirebaseAuth.getInstance().currentUser
+
+    var name by remember {
+        mutableStateOf(
+            preferences.getString(
+                "name",
+                user?.displayName ?: ""
+            ) ?: ""
+        )
+    }
+
+    val email = user?.email ?: ""
+
+    var phone by remember {
+        mutableStateOf(
+            preferences.getString(
+                "phone",
+                ""
+            ) ?: ""
+        )
+    }
+
+    var dateOfBirth by remember {
+        mutableStateOf(
+            preferences.getString(
+                "date_of_birth",
+                ""
+            ) ?: ""
+        )
+    }
+
+    var country by remember {
+        mutableStateOf(
+            preferences.getString(
+                "country",
+                ""
+            ) ?: ""
+        )
+    }
+
+    var editing by remember {
+        mutableStateOf(false)
+    }
+
+    var saved by remember {
+        mutableStateOf(false)
+    }
+
+    Scaffold(
+
+        topBar = {
+
+            TopAppBar(
+
+                title = {
+                    Text("Profile")
+                },
+
+                navigationIcon = {
+
+                    IconButton(
+                        onClick = onBack
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+
+                actions = {
+
+                    IconButton(
+                        onClick = {
+                            editing = !editing
+                            saved = false
+                        }
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Profile"
+                        )
+                    }
+                }
+            )
+        }
+
+    ) { paddingValues ->
+
+        Column(
+
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(20.dp),
+
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            // -----------------------------------------------------
+            // PROFILE ICON
+            // -----------------------------------------------------
+
+            Icon(
+
+                imageVector = Icons.Default.Person,
+
+                contentDescription = "Profile",
+
+                modifier = Modifier
+                    .size(90.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .clip(CircleShape),
+
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+
+            Text(
+                text = "View and manage your personal information.",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+
+            // -----------------------------------------------------
+            // NAME
+            // -----------------------------------------------------
+
+            OutlinedTextField(
+
+                value = name,
+
+                onValueChange = {
+                    name = it
+                    saved = false
+                },
+
+                label = {
+                    Text("Full Name")
+                },
+
+                enabled = editing,
+
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
+            // -----------------------------------------------------
+            // EMAIL
+            // -----------------------------------------------------
+
+            OutlinedTextField(
+
+                value = email,
+
+                onValueChange = {},
+
+                label = {
+                    Text("Email Address")
+                },
+
+                enabled = false,
+
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
+            // -----------------------------------------------------
+            // PHONE
+            // -----------------------------------------------------
+
+            OutlinedTextField(
+
+                value = phone,
+
+                onValueChange = {
+                    phone = it
+                    saved = false
+                },
+
+                label = {
+                    Text("Phone Number")
+                },
+
+                enabled = editing,
+
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
+            // -----------------------------------------------------
+            // DATE OF BIRTH
+            // -----------------------------------------------------
+
+            OutlinedTextField(
+
+                value = dateOfBirth,
+
+                onValueChange = {
+                    dateOfBirth = it
+                    saved = false
+                },
+
+                label = {
+                    Text("Date of Birth")
+                },
+
+                enabled = editing,
+
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
+            // -----------------------------------------------------
+            // COUNTRY
+            // -----------------------------------------------------
+
+            OutlinedTextField(
+
+                value = country,
+
+                onValueChange = {
+                    country = it
+                    saved = false
+                },
+
+                label = {
+                    Text("Country")
+                },
+
+                enabled = editing,
+
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+
+            // -----------------------------------------------------
+            // SAVE PROFILE
+            // -----------------------------------------------------
+
+            if (editing) {
+
+                Button(
+
+                    onClick = {
+
+                        preferences
+                            .edit()
+                            .putString(
+                                "name",
+                                name
+                            )
+                            .putString(
+                                "phone",
+                                phone
+                            )
+                            .putString(
+                                "date_of_birth",
+                                dateOfBirth
+                            )
+                            .putString(
+                                "country",
+                                country
+                            )
+                            .apply()
+
+
+                        user?.updateProfile(
+
+                            UserProfileChangeRequest
+                                .Builder()
+                                .setDisplayName(name)
+                                .build()
+
+                        )?.addOnCompleteListener {
+
+                            editing = false
+                            saved = true
+                        }
+                    },
+
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Text("Save Profile")
+                }
+            }
+
+
+            // -----------------------------------------------------
+            // SUCCESS MESSAGE
+            // -----------------------------------------------------
+
+            if (saved) {
+
+                Text(
+                    text = "Profile saved successfully.",
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+===== LanguageScreen.kt =====
+package com.winx.app.screens
+
+import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LanguageScreen(
+    onBack: () -> Unit
+) {
+
+    val context = LocalContext.current
+
+    val preferences = remember {
+        context.getSharedPreferences(
+            "winx_settings",
+            Context.MODE_PRIVATE
+        )
+    }
+
+    val languages = listOf(
+        "English (US)",
+        "isiZulu (Zulu)",
+        "Afrikaans",
+        "Italiano (Italian)",
+        "Deutsch (German)"
+    )
+
+    var selectedLanguage by remember {
+
+        mutableStateOf(
+            preferences.getString(
+                "language",
+                "English (US)"
+            ) ?: "English (US)"
+        )
+    }
+
+    var saved by remember {
+        mutableStateOf(false)
+    }
+
+    Scaffold(
+
+        topBar = {
+
+            TopAppBar(
+
+                title = {
+                    Text("Language")
+                },
+
+                navigationIcon = {
+
+                    IconButton(
+                        onClick = onBack
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+
+    ) { paddingValues ->
+
+        Column(
+
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(20.dp),
+
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.Language,
+                contentDescription = "Language"
+            )
+
+            Text(
+                text = "Change App Language"
+            )
+
+            Text(
+                text = "Select the language you would like to use throughout the app."
+            )
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
+
+            languages.forEach { language ->
+
+                Row(
+
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    RadioButton(
+
+                        selected =
+                            selectedLanguage == language,
+
+                        onClick = {
+
+                            selectedLanguage = language
+                            saved = false
+                        }
+                    )
+
+                    Text(
+                        text = language
+                    )
+                }
+            }
+
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
+
+            Button(
+
+                onClick = {
+
+                    preferences
+                        .edit()
+                        .putString(
+                            "language",
+                            selectedLanguage
+                        )
+                        .apply()
+
+                    saved = true
+                },
+
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Text("Save Language")
+            }
+
+
+            if (saved) {
+
+                Text(
+                    text = "Language preference saved."
+                )
+            }
+        }
+    }
+}
+
+===== RecentlyDeletedScreen.kt =====
+package com.winx.app.screens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RecentlyDeletedScreen(
+    onBack: () -> Unit
+) {
+
+    val deletedItems = remember {
+
+        mutableStateListOf(
+            "Ithaa Undersea Restaurant",
+            "El Diablo Restaurant",
+            "Modern Toilet Restaurant",
+            "Dinner in the Sky"
+        )
+    }
+
+    Scaffold(
+
+        topBar = {
+
+            TopAppBar(
+
+                title = {
+                    Text("Recently Deleted")
+                },
+
+                navigationIcon = {
+
+                    IconButton(
+                        onClick = onBack
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+
+    ) { paddingValues ->
+
+        Column(
+
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(20.dp),
+
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            Text(
+                text = "Items are deleted for 30 days."
+            )
+
+            Text(
+                text = "After 30 days, deleted items can no longer be restored."
+            )
+
+
+            deletedItems.forEach { item ->
+
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Row(
+
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Deleted"
+                        )
+
+                        Text(
+                            text = item,
+
+                            modifier = Modifier
+                                .padding(start = 12.dp)
+                                .weight(1f)
+                        )
+
+                        Button(
+                            onClick = {
+                                deletedItems.remove(item)
+                            }
+                        ) {
+
+                            Text("Restore")
+                        }
+                    }
+                }
+            }
+
+
+            if (deletedItems.isNotEmpty()) {
+
+                Button(
+
+                    onClick = {
+                        deletedItems.clear()
+                    },
+
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Text("Empty Deleted Items")
+                }
+            }
+        }
+    }
+}
+
+===== SecurityScreen.kt =====
+package com.winx.app.screens
+
+import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.google.firebase.auth.EmailAuthProvider
+import com.google.firebase.auth.FirebaseAuth
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SecurityScreen(
+    onBack: () -> Unit
+) {
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    val preferences = remember {
+
+        context.getSharedPreferences(
+            "winx_security",
+            Context.MODE_PRIVATE
+        )
+    }
+
+
+    var currentPassword by remember {
+        mutableStateOf("")
+    }
+
+    var newPassword by remember {
+        mutableStateOf("")
+    }
+
+    var confirmPassword by remember {
+        mutableStateOf("")
+    }
+
+    var message by remember {
+        mutableStateOf("")
+    }
+
+    var facialRecognition by remember {
+
+        mutableStateOf(
+            preferences.getBoolean(
+                "facial_recognition",
+                false
+            )
+        )
+    }
+
+
+    Scaffold(
+
+        topBar = {
+
+            TopAppBar(
+
+                title = {
+                    Text("Security")
+                },
+
+                navigationIcon = {
+
+                    IconButton(
+                        onClick = onBack
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+
+    ) { paddingValues ->
+
+        Column(
+
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(20.dp),
+
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = "Security"
+            )
+
+
+            Text(
+                text = "Password"
+            )
+
+
+            Text(
+                text = "Change your password to keep your account secure."
+            )
+
+
+            OutlinedTextField(
+
+                value = currentPassword,
+
+                onValueChange = {
+                    currentPassword = it
+                },
+
+                label = {
+                    Text("Current Password")
+                },
+
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
+            OutlinedTextField(
+
+                value = newPassword,
+
+                onValueChange = {
+                    newPassword = it
+                },
+
+                label = {
+                    Text("New Password")
+                },
+
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
+            OutlinedTextField(
+
+                value = confirmPassword,
+
+                onValueChange = {
+                    confirmPassword = it
+                },
+
+                label = {
+                    Text("Confirm New Password")
+                },
+
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
+            Button(
+
+                onClick = {
+
+                    when {
+
+                        currentPassword.isBlank() -> {
+
+                            message =
+                                "Enter your current password."
+                        }
+
+                        newPassword.length < 6 -> {
+
+                            message =
+                                "New password must contain at least 6 characters."
+                        }
+
+                        newPassword != confirmPassword -> {
+
+                            message =
+                                "Passwords do not match."
+                        }
+
+                        else -> {
+
+                            val user =
+                                FirebaseAuth
+                                    .getInstance()
+                                    .currentUser
+
+                            if (user?.email == null) {
+
+                                message =
+                                    "Password changes are only available for email accounts."
+
+                            } else {
+
+                                val credential =
+                                    EmailAuthProvider
+                                        .getCredential(
+                                            user.email!!,
+                                            currentPassword
+                                        )
+
+                                user
+                                    .reauthenticate(credential)
+                                    .addOnSuccessListener {
+
+                                        user
+                                            .updatePassword(
+                                                newPassword
+                                            )
+                                            .addOnSuccessListener {
+
+                                                currentPassword = ""
+                                                newPassword = ""
+                                                confirmPassword = ""
+
+                                                message =
+                                                    "Password updated successfully."
+                                            }
+                                            .addOnFailureListener {
+
+                                                message =
+                                                    it.message
+                                                        ?: "Unable to update password."
+                                            }
+                                    }
+                                    .addOnFailureListener {
+
+                                        message =
+                                            "Current password is incorrect."
+                                    }
+                            }
+                        }
+                    }
+                },
+
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Text("Update Password")
+            }
+
+
+            if (message.isNotBlank()) {
+
+                Text(message)
+            }
+
+
+            // -----------------------------------------------------
+            // FACIAL RECOGNITION PREFERENCE
+            // -----------------------------------------------------
+
+            Row(
+
+                modifier = Modifier.fillMaxWidth(),
+
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.Face,
+                    contentDescription = "Facial Recognition"
+                )
+
+
+                Text(
+
+                    text = "Facial Recognition",
+
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 12.dp)
+                )
+
+
+                Switch(
+
+                    checked = facialRecognition,
+
+                    onCheckedChange = {
+
+                        facialRecognition = it
+
+                        preferences
+                            .edit()
+                            .putBoolean(
+                                "facial_recognition",
+                                it
+                            )
+                            .apply()
+                    }
+                )
+            }
+
+
+            Text(
+
+                text = if (facialRecognition) {
+
+                    "Facial recognition preference enabled."
+
+                } else {
+
+                    "Facial recognition is not enabled."
+                }
+            )
+        }
+    }
+}
+
+===== NotificationsScreen.kt =====
+package com.winx.app.screens
+
+import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NotificationsScreen(
+    onBack: () -> Unit
+) {
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    val preferences = remember {
+
+        context.getSharedPreferences(
+            "winx_settings",
+            Context.MODE_PRIVATE
+        )
+    }
+
+
+    var notificationsEnabled by remember {
+
+        mutableStateOf(
+            preferences.getBoolean(
+                "notifications_enabled",
+                true
+            )
+        )
+    }
+
+
+    val notifications = listOf(
+
+        "New Entry Added" to
+                "Your restaurant entry was saved successfully.",
+
+        "Video Uploaded" to
+                "Your video has been uploaded successfully.",
+
+        "Country Added" to
+                "You added a new country to your countries.",
+
+        "Reminder" to
+                "Don't forget to capture your dining experience."
+    )
+
+
+    Scaffold(
+
+        topBar = {
+
+            TopAppBar(
+
+                title = {
+                    Text("Notifications")
+                },
+
+                navigationIcon = {
+
+                    IconButton(
+                        onClick = onBack
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+
+    ) { paddingValues ->
+
+        Column(
+
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(20.dp),
+
+            verticalArrangement =
+                Arrangement.spacedBy(12.dp)
+        ) {
+
+
+            // -----------------------------------------------------
+            // NOTIFICATION TOGGLE
+            // -----------------------------------------------------
+
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Row(
+
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+
+                    verticalAlignment =
+                        Alignment.CenterVertically
+                ) {
+
+                    Icon(
+
+                        imageVector =
+                            Icons.Default.Notifications,
+
+                        contentDescription =
+                            "Notifications"
+                    )
+
+
+                    Text(
+
+                        text = "Stay Updated",
+
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 12.dp)
+                    )
+
+
+                    Switch(
+
+                        checked =
+                            notificationsEnabled,
+
+                        onCheckedChange = {
+
+                            notificationsEnabled = it
+
+                            preferences
+                                .edit()
+                                .putBoolean(
+                                    "notifications_enabled",
+                                    it
+                                )
+                                .apply()
+                        }
+                    )
+                }
+            }
+
+
+            Text(
+                text = "Recent Notifications"
+            )
+
+
+            // -----------------------------------------------------
+            // NOTIFICATION LIST
+            // -----------------------------------------------------
+
+            notifications.forEach { notification ->
+
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Row(
+
+                        modifier = Modifier.padding(16.dp),
+
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+
+                        Icon(
+
+                            imageVector =
+                                Icons.Default.Notifications,
+
+                            contentDescription =
+                                "Notification"
+                        )
+
+
+                        Column(
+
+                            modifier = Modifier.padding(
+                                start = 12.dp
+                            )
+                        ) {
+
+                            Text(
+                                text = notification.first
+                            )
+
+                            Text(
+                                text = notification.second
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+===== AboutUsScreen.kt =====
+package com.winx.app.screens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AboutUsScreen(
+    onBack: () -> Unit
+) {
+
+    Scaffold(
+
+        topBar = {
+
+            TopAppBar(
+
+                title = {
+                    Text("About Us")
+                },
+
+                navigationIcon = {
+
+                    IconButton(
+                        onClick = onBack
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+
+    ) { paddingValues ->
+
+        Column(
+
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(20.dp)
+                .verticalScroll(
+                    rememberScrollState()
+                ),
+
+            verticalArrangement =
+                Arrangement.spacedBy(18.dp)
+        ) {
+
+
+            // -----------------------------------------------------
+            // WINX
+            // -----------------------------------------------------
+
+            Text(
+
+                text = "Winx",
+
+                style =
+                    MaterialTheme
+                        .typography
+                        .displaySmall
+            )
+
+
+            // -----------------------------------------------------
+            // OUR STORY
+            // -----------------------------------------------------
+
+            Text(
+                text = "Our Story"
+            )
+
+            Text(
+                text = "WINX was created for explorers, food lovers, and memory collectors. We know that every trip is more than just a destination — it is a collection of moments, flavours, and experiences that deserve to be remembered."
+            )
+
+
+            // -----------------------------------------------------
+            // OUR MISSION
+            // -----------------------------------------------------
+
+            Text(
+                text = "Our Mission"
+            )
+
+            Text(
+                text = "Our mission is to help you capture every moment of your journey and keep those memories alive forever."
+            )
+
+
+            // -----------------------------------------------------
+            // WHY WE EXIST
+            // -----------------------------------------------------
+
+            Text(
+                text = "Why We Exist"
+            )
+
+            Text(
+                text = "We believe that every trip has a story worth telling. WINX makes it easier for you to document your adventures, discover new places, and inspire others to explore the world."
+            )
+
+
+            // -----------------------------------------------------
+            // WE'RE HERE FOR YOU
+            // -----------------------------------------------------
+
+            Text(
+                text = "We're Here For You"
+            )
+
+            Text(
+                text = "Your journey matters to us. WINX is designed to help make every trip more meaningful, organised, and unforgettable."
+            )
+
+
+            Text(
+                text = "Thank you for being part of our community."
+            )
+        }
+    }
+}
