@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "401047143971",
+    "project_id": "winx-prog7314",
+    "storage_bucket": "winx-prog7314.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401047143971:android:98d221fc488e0572d41396",
+        "android_client_info": {
+          "package_name": "com.winx.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "401047143971-m3qhuvpgj20brahi27hsdvs7ds9chv8l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.winx.app",
+            "certificate_hash": "d999d250d2789f5a9cc4ecb9d73cb61cfaff1010"
+          }
+        },
+        {
+          "client_id": "401047143971-qm7qrfaniqdimb96t7r9tn15ljtv5d75.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5-KROL51Rn75-jfCLRZB_9xh--GB0L2M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "401047143971-qm7qrfaniqdimb96t7r9tn15ljtv5d75.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

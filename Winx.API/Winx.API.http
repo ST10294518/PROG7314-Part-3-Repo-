@@ -1,0 +1,6 @@
+@Winx.API_HostAddress = http://localhost:5001
+
+GET {{Winx.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

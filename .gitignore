@@ -1,0 +1,22 @@
+# Android Studio
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+gradle/gradle-daemon-jvm.properties
+
+# Local configuration
+local.properties
+
+# Build files
+/build
+/app/build
+/captures
+
+# Native build
+.externalNativeBuild/
+.cxx/
+
+# macOS
+.DS_Store
