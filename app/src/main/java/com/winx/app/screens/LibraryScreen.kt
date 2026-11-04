@@ -1,6 +1,7 @@
 package com.winx.app.screens
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +38,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.CancellationException
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -64,6 +66,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
+import androidx.compose.ui.platform.LocalContext
 
 private enum class LibrarySort(val label: String) {
     NEWEST("Newest first"),
@@ -94,34 +97,59 @@ fun LibraryScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var reloadKey by remember { mutableIntStateOf(0) }
 
-    val entryRepository = remember { TravelEntryRepository() }
+    val context = LocalContext.current
+    val entryRepository = remember(context) {
+        TravelEntryRepository(context)
+    }
     val mediaRepository = remember { MediaRepository() }
 
     LaunchedEffect(reloadKey) {
         isLoading = true
         errorMessage = null
 
-        entryRepository.getEntries()
-            .onSuccess { loadedEntries ->
-                entries = loadedEntries
-
-                mediaRepository.getMediaForEntries(loadedEntries.map { it.id })
-                    .onSuccess { loadedMedia ->
-                        mediaItems = loadedMedia
-                        isLoading = false
-                    }
-                    .onFailure { error ->
+        try {
+            val entryResult = entryRepository.getEntries()
+            entryResult.fold(
+                onSuccess = { loadedEntries ->
+                    entries = loadedEntries
+                    // Media belongs to server-side entries. Offline-only entries
+                    // use negative local IDs and cannot be queried on the API.
+                    val serverIds = loadedEntries.map { it.id }.filter { it > 0 }
+                    if (serverIds.isEmpty()) {
                         mediaItems = emptyList()
-                        errorMessage = error.message ?: "Unable to load Library media."
-                        isLoading = false
+                    } else {
+                        try {
+                            mediaRepository.getMediaForEntries(serverIds)
+                                .onSuccess { loadedMedia ->
+                                    mediaItems = loadedMedia
+                                }
+                                .onFailure { error ->
+                                    // Keep the Entries tab usable without media connectivity.
+                                    mediaItems = emptyList()
+                                    Log.w("LibraryScreen", "Media unavailable; showing entries", error)
+                                }
+                        } catch (exception: CancellationException) {
+                            throw exception
+                        } catch (exception: Exception) {
+                            mediaItems = emptyList()
+                            Log.w("LibraryScreen", "Unable to load media", exception)
+                        }
                     }
-            }
-            .onFailure { error ->
-                entries = emptyList()
-                mediaItems = emptyList()
-                errorMessage = error.message ?: "Unable to connect to the Winx REST API."
-                isLoading = false
-            }
+                },
+                onFailure = { error ->
+                    entries = emptyList()
+                    mediaItems = emptyList()
+                    errorMessage = error.message ?: "Unable to load travel entries."
+                }
+            )
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            Log.e("LibraryScreen", "Library loading failed", exception)
+            errorMessage = exception.message ?: "Unable to load the Library."
+        } finally {
+            isLoading = false
+        }
     }
 
     val entryById = remember(entries) { entries.associateBy { it.id } }

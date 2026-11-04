@@ -20,3 +20,35 @@ local.properties
 
 # macOS
 .DS_Store
+# Release signing and environment configuration
+*.jks
+*.keystore
+key.properties
+.env
+app/release/
+**/bin/
+**/obj/
+Winx.API/*.db
+Winx.API/*.db-shm
+Winx.API/*.db-wal
+
+# Local build and IDE files
+.gradle/
+.idea/
+.kotlin/
+**/build/
+**/bin/
+**/obj/
+local.properties
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Secrets and signing
+*.keystore
+*.jks
+appsettings.Development.json

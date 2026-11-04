@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
     id("com.google.gms.google-services")
 }
 
@@ -17,6 +18,9 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        // Override using -PWINX_API_BASE_URL=https://your-host.example/
+        val apiUrl = providers.gradleProperty("WINX_API_BASE_URL").orElse("http://10.0.2.2:5001/").get()
+        buildConfigField("String", "API_BASE_URL", "\"${apiUrl}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -38,6 +42,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }
@@ -62,6 +67,7 @@ dependencies {
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-messaging")
 
     // Google Sign-In with Credential Manager
     implementation("androidx.credentials:credentials:1.5.0")
@@ -95,4 +101,15 @@ dependencies {
     // Compose debugging
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    implementation(libs.androidx.room.runtime)
+implementation(libs.androidx.room.ktx)
+implementation(libs.androidx.work.runtime.ktx)
+
+ksp(libs.androidx.room.compiler)
+
+
+
+
 }
+

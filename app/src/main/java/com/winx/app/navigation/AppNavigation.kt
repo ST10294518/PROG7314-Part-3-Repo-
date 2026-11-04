@@ -1,11 +1,20 @@
 package com.winx.app.navigation
 
 import android.util.Log
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.os.Build
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +30,7 @@ import androidx.navigation.compose.rememberNavController
 
 import com.winx.app.auth.GoogleAuthManager
 import com.winx.app.data.remote.TravelEntryRepository
+import com.winx.app.data.remote.MediaRepository
 
 import com.winx.app.screens.AboutUsScreen
 import com.winx.app.screens.CalendarScreen
@@ -41,8 +51,8 @@ import com.winx.app.screens.SecurityScreen
 import com.winx.app.screens.SettingsScreen
 import com.winx.app.screens.TravelEntry
 import com.winx.app.screens.WelcomeScreen
-
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @Composable
 fun AppNavigation() {
@@ -56,6 +66,8 @@ fun AppNavigation() {
     val context = LocalContext.current
 
     val coroutineScope = rememberCoroutineScope()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val mediaRepository = remember { MediaRepository() }
 
     // =============================================================
     // GOOGLE AUTHENTICATION
@@ -80,9 +92,9 @@ fun AppNavigation() {
     // REST API REPOSITORY
     // =============================================================
 
-    val repository = remember {
-        TravelEntryRepository()
-    }
+    val repository = remember(context) {
+    TravelEntryRepository(context)
+}
 
     // =============================================================
     // SELECTED COUNTRY
@@ -120,6 +132,10 @@ fun AppNavigation() {
         mutableStateOf(false)
     }
 
+    var syncInProgress by remember {
+    mutableStateOf(false)
+}
+
     // =============================================================
     // DELETE CONFIRMATION
     // =============================================================
@@ -133,43 +149,120 @@ fun AppNavigation() {
     // =============================================================
 
     fun loadEntries() {
+        // Set this before launching so repeated taps cannot queue overlapping loads.
+        if (entriesLoading) return
+        entriesLoading = true
 
         coroutineScope.launch {
+            try {
+                Log.d("AppNavigation", "Refreshing travel entries")
 
-            entriesLoading = true
+                if (!syncInProgress) {
+                    syncInProgress = true
+                    try {
+                        // Reconcile uploads first: they may produce pending deletions.
+                        repository.syncPendingNewEntries()
+                            .onSuccess { count ->
+                                Log.d("AppNavigation", "Pending uploads synced: $count")
+                            }
+                            .onFailure { error ->
+                                Log.w("AppNavigation", "Upload sync failed", error)
+                            }
 
-            Log.d(
-                "AppNavigation",
-                "Loading entries from REST API..."
-            )
+                        // Also processes deletions recovered during the upload pass.
+                        repository.syncPendingDeletions()
+                            .onSuccess { count ->
+                                Log.d("AppNavigation", "Pending deletions synced: $count")
+                            }
+                            .onFailure { error ->
+                                Log.w("AppNavigation", "Deletion sync failed", error)
+                            }
 
-            repository
-                .getEntries()
-                .onSuccess { loadedEntries ->
-
-                    entries = loadedEntries
-
-                    apiError = null
-
-                    Log.d(
-                        "AppNavigation",
-                        "Entries loaded successfully. Count=${loadedEntries.size}"
-                    )
+                        // Travel entries must have server IDs before queued media can upload.
+                        mediaRepository.syncPendingMediaUploads(context.applicationContext)
+                            .onSuccess { count ->
+                                Log.d("AppNavigation", "Pending media synced: $count")
+                            }
+                            .onFailure { error ->
+                                Log.w("AppNavigation", "Media sync failed", error)
+                            }
+                    } finally {
+                        syncInProgress = false
+                    }
                 }
-                .onFailure { exception ->
 
-                    apiError =
-                        exception.message
-                            ?: "Unable to load entries from the REST API."
+                repository.getEntries()
+                    .onSuccess { loaded ->
+                        entries = loaded
 
-                    Log.e(
-                        "AppNavigation",
-                        "Failed to load entries.",
-                        exception
-                    )
+                        // Keep the selected entry aligned with Room/API refreshes.
+                        // An offline entry changes from a negative local ID to a
+                        // positive server ID after successful synchronisation.
+                        selectedEntry?.let { selected ->
+                            val refreshed = selected.clientId
+                                ?.let { uuid -> loaded.find { it.clientId == uuid } }
+                                ?: loaded.find { it.id == selected.id }
+                            if (refreshed != null) {
+                                selectedEntry = refreshed
+                            }
+                        }
+
+                        apiError = null
+                        Log.d("AppNavigation", "Entries loaded: ${loaded.size}")
+                    }
+                    .onFailure { error ->
+                        apiError = error.message ?: "Unable to load travel entries."
+                        Log.e("AppNavigation", "Failed to load entries", error)
+                    }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                apiError = error.message ?: "Unable to refresh travel entries."
+                Log.e("AppNavigation", "Unexpected refresh failure", error)
+            } finally {
+                entriesLoading = false
+            }
+        }
+    }
+
+    // Keep the latest refresh function available to lifecycle/network callbacks.
+    val refreshEntries = rememberUpdatedState(newValue = { loadEntries() })
+
+    // Refresh on returning to the app and when Android reports a network return.
+    // This is foreground synchronization; WorkManager is needed for closed-app jobs.
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) refreshEntries.value()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        val connectivityManager = context.applicationContext
+            .getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                coroutineScope.launch { refreshEntries.value() }
+            }
+        }
+        var registered = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            try {
+                connectivityManager?.registerDefaultNetworkCallback(callback)
+                registered = connectivityManager != null
+            } catch (error: SecurityException) {
+                Log.w("AppNavigation", "Network monitoring requires ACCESS_NETWORK_STATE", error)
+            } catch (error: Exception) {
+                Log.w("AppNavigation", "Unable to register network callback", error)
+            }
+        }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            if (registered) {
+                try {
+                    connectivityManager?.unregisterNetworkCallback(callback)
+                } catch (error: Exception) {
+                    Log.w("AppNavigation", "Unable to unregister network callback", error)
                 }
-
-            entriesLoading = false
+            }
         }
     }
 
@@ -177,6 +270,7 @@ fun AppNavigation() {
     // NAVIGATION
     // =============================================================
 
+    @Suppress("UNUSED_VARIABLE")
     val currentLanguageRefresh = languageRefreshKey
 
     NavHost(
@@ -312,8 +406,6 @@ fun AppNavigation() {
                 },
 
                 onEntryClick = {
-
-                    loadEntries()
 
                     navController.navigate("entries")
                 },
@@ -635,49 +727,68 @@ fun AppNavigation() {
                 // -------------------------------------------------
 
                 onSaveClick = { newEntry ->
-
                     coroutineScope.launch {
+                        Log.d("AppNavigation", "Creating new entry: ${newEntry.title}")
 
-                        Log.d(
-                            "AppNavigation",
-                            "Creating new entry: ${newEntry.title}"
+                        val entryWithClientId = newEntry.copy(
+                            clientId = newEntry.clientId ?: UUID.randomUUID().toString()
                         )
 
-                        repository
-                            .createEntry(newEntry)
+                        repository.createEntry(entryWithClientId)
                             .onSuccess { createdEntry ->
-
                                 Log.d(
                                     "AppNavigation",
                                     "Entry created successfully. ID=${createdEntry.id}"
                                 )
-
-                                entries =
-                                    entries + createdEntry
-
-                                selectedEntry =
-                                    createdEntry
-
+                                entries = entries + createdEntry
+                                selectedEntry = createdEntry
                                 apiError = null
 
                                 navController.navigate("entries") {
-
-                                    popUpTo("entry") {
-                                        inclusive = true
-                                    }
+                                    popUpTo("entry") { inclusive = true }
                                 }
                             }
                             .onFailure { exception ->
-
-                                Log.e(
-                                    "AppNavigation",
-                                    "Failed to create entry.",
-                                    exception
-                                )
-
-                                apiError =
-                                    exception.message
-                                        ?: "Unable to save the entry."
+                                if (exception is java.io.IOException) {
+                                    Log.w(
+                                        "AppNavigation",
+                                        "Network save failed. Attempting offline save.",
+                                        exception
+                                    )
+                                    repository.createEntryOffline(entryWithClientId)
+                                        .onSuccess { savedEntry ->
+                                            entries = entries + savedEntry
+                                            selectedEntry = savedEntry
+                                            apiError = null
+                                            Log.d(
+                                                "AppNavigation",
+                                                "Entry saved offline. ID=${savedEntry.id}"
+                                            )
+                                            navController.navigate("entries") {
+                                                popUpTo("entry") { inclusive = true }
+                                            }
+                                        }
+                                        .onFailure { localException ->
+                                            Log.e(
+                                                "AppNavigation",
+                                                "Offline save failed.",
+                                                localException
+                                            )
+                                            apiError = localException.message
+                                                ?: "Unable to save the entry locally."
+                                        }
+                                } else {
+                                    Log.e(
+                                        "AppNavigation",
+                                        "Entry creation failed; not queueing offline.",
+                                        exception
+                                    )
+                                    apiError = if (exception is retrofit2.HttpException) {
+                                        "Unable to save entry. HTTP ${exception.code()}"
+                                    } else {
+                                        exception.message ?: "Unable to save the entry."
+                                    }
+                                }
                             }
                     }
                 },
@@ -784,7 +895,6 @@ fun AppNavigation() {
                 },
 
                 onEntriesClick = {
-                    loadEntries()
                     navController.navigate("entries") {
                         launchSingleTop = true
                     }

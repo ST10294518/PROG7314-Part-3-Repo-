@@ -20,6 +20,13 @@ interface WinxApiService {
         @Path("id") id: Int
     ): TravelEntryDto
 
+    // GET an entry by its client-generated UUID.
+// Returns 404 if the entry has not reached the server.
+@GET("api/Entries/by-client-id/{clientId}")
+suspend fun getEntryByClientId(
+    @Path("clientId") clientId: String
+): Response<TravelEntryDto>
+
     // CREATE a new entry
     @POST("api/Entries")
     suspend fun createEntry(

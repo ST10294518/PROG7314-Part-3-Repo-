@@ -1,6 +1,7 @@
 package com.winx.app.screens
 
 import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -32,6 +33,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.winx.app.database.PendingMediaUploadEntity
 import com.winx.app.data.remote.MediaItemDto
 import com.winx.app.data.remote.MediaRepository
 import com.winx.app.ui.theme.WinxBlue
@@ -73,91 +76,87 @@ fun EntryDetailsScreen(
     }
 
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var isSavingMedia by remember { mutableStateOf(false) }
+    var removingQueuedId by remember { mutableStateOf<Long?>(null) }
 
-    var mediaItems by remember {
-        mutableStateOf<List<MediaItemDto>>(emptyList())
-    }
+    var mediaItems by remember { mutableStateOf<List<MediaItemDto>>(emptyList()) }
+    var queuedMedia by remember { mutableStateOf<List<PendingMediaUploadEntity>>(emptyList()) }
+    var mediaError by remember { mutableStateOf<String?>(null) }
+    var mediaMessage by remember { mutableStateOf<String?>(null) }
 
-    var mediaError by remember {
-        mutableStateOf<String?>(null)
-    }
+    // Reload when an offline entry receives its server ID. The client UUID
+    // remains stable across that transition.
+    LaunchedEffect(entry.id, entry.clientId) {
+        mediaItems = emptyList()
+        queuedMedia = emptyList()
+        mediaError = null
+        mediaRepository.getQueuedMediaForEntry(
+            context, entry.clientId, entry.id.takeIf { it > 0 }
+        ).onSuccess { queuedMedia = it }
+            .onFailure { mediaError = it.message ?: "Unable to load queued media." }
 
-    LaunchedEffect(entry.id) {
-        mediaRepository.getMediaForEntry(entry.id)
-            .onSuccess { media ->
-                mediaItems = media
-                mediaError = null
-            }
-            .onFailure { exception ->
-                mediaError = exception.message ?: "Failed to load media."
-            }
-    }
-
-    val photoPickerLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent()
-        ) { uri: Uri? ->
-
-            if (uri != null) {
-
-                val fileName = uri.lastPathSegment
-                    ?: "photo_${System.currentTimeMillis()}.jpg"
-
-                coroutineScope.launch {
-
-                    mediaRepository.createMedia(
-                        MediaItemDto(
-                            travelEntryId = entry.id,
-                            mediaType = "Photo",
-                            fileName = fileName,
-                            filePath = uri.toString()
-                        )
-                    ).onSuccess { createdMedia ->
-
-                        mediaItems = mediaItems + createdMedia
-                        mediaError = null
-
-                    }.onFailure { exception ->
-
-                        mediaError =
-                            exception.message ?: "Failed to save photo."
-                    }
+        if (entry.id > 0) {
+            mediaRepository.getMediaForEntry(entry.id)
+                .onSuccess { mediaItems = it }
+                .onFailure {
+                    // Keep locally queued media visible if the server is offline.
+                    mediaError = it.message ?: "Unable to load uploaded media."
                 }
+        }
+    }
+
+    // Always save the picked file to durable storage first. The app's network
+    // synchronization pass uploads it later using its stable upload UUID.
+    fun uploadSelectedMedia(uri: Uri) {
+        if (isSavingMedia) return
+        coroutineScope.launch {
+            isSavingMedia = true
+            mediaError = null
+            mediaMessage = null
+            try {
+                mediaRepository.queueMediaUpload(
+                    context = context,
+                    uri = uri,
+                    entryClientId = entry.clientId,
+                    entryServerId = entry.id.takeIf { it > 0 }
+                ).onSuccess {
+                    mediaMessage = "Media saved on this device. It will upload when connected."
+                    mediaRepository.getQueuedMediaForEntry(
+                        context, entry.clientId, entry.id.takeIf { it > 0 }
+                    ).onSuccess { pending -> queuedMedia = pending }
+                    // Try immediately if the server is reachable; the durable
+                    // queue remains intact if the attempt fails.
+                    coroutineScope.launch {
+                        mediaRepository.syncPendingMediaUploads(context)
+                        mediaRepository.getQueuedMediaForEntry(
+                            context, entry.clientId, entry.id.takeIf { it > 0 }
+                        ).onSuccess { pending -> queuedMedia = pending }
+                        if (entry.id > 0) {
+                            mediaRepository.getMediaForEntry(entry.id)
+                                .onSuccess { uploaded -> mediaItems = uploaded }
+                        }
+                    }
+                }.onFailure {
+                    mediaError = it.message ?: "Unable to save selected media."
+                }
+            } finally {
+                isSavingMedia = false
             }
         }
+    }
 
-    val videoPickerLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent()
-        ) { uri: Uri? ->
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) uploadSelectedMedia(uri)
+    }
 
-            if (uri != null) {
-
-                val fileName = uri.lastPathSegment
-                    ?: "video_${System.currentTimeMillis()}.mp4"
-
-                coroutineScope.launch {
-
-                    mediaRepository.createMedia(
-                        MediaItemDto(
-                            travelEntryId = entry.id,
-                            mediaType = "Video",
-                            fileName = fileName,
-                            filePath = uri.toString()
-                        )
-                    ).onSuccess { createdMedia ->
-
-                        mediaItems = mediaItems + createdMedia
-                        mediaError = null
-
-                    }.onFailure { exception ->
-
-                        mediaError =
-                            exception.message ?: "Failed to save video."
-                    }
-                }
-            }
-        }
+    val videoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) uploadSelectedMedia(uri)
+    }
 
     val formattedDate = try {
 
@@ -458,6 +457,7 @@ fun EntryDetailsScreen(
                             photoPickerLauncher.launch("image/*")
                         },
                         modifier = Modifier.weight(1f),
+                        enabled = !isSavingMedia && (entry.id > 0 || !entry.clientId.isNullOrBlank()),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = WinxBlue
                         )
@@ -481,6 +481,7 @@ fun EntryDetailsScreen(
                             videoPickerLauncher.launch("video/*")
                         },
                         modifier = Modifier.weight(1f),
+                        enabled = !isSavingMedia && (entry.id > 0 || !entry.clientId.isNullOrBlank()),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = WinxPurple
                         )
@@ -500,6 +501,27 @@ fun EntryDetailsScreen(
                     }
                 }
 
+                if (isSavingMedia) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Saving media on this device…", color = WinxDarkBlue, fontSize = 13.sp)
+                    }
+                }
+
+                if (entry.id <= 0) {
+                    Text(
+                        text = "Photos and videos are saved offline and uploaded after this entry syncs.",
+                        color = Color.Gray,
+                        fontSize = 13.sp
+                    )
+                }
+
+                mediaMessage?.let { message ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = message, color = WinxDarkBlue, fontSize = 13.sp)
+                }
+
                 mediaError?.let { error ->
 
                     Spacer(
@@ -514,7 +536,70 @@ fun EntryDetailsScreen(
                 }
             }
 
-            if (mediaItems.isEmpty()) {
+            if (queuedMedia.isNotEmpty()) {
+                items(items = queuedMedia, key = { "queued_${it.localId}" }) { pending ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F8F8))
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (pending.mediaType == "Photo") Icons.Outlined.Image
+                                    else Icons.Outlined.VideoLibrary,
+                                contentDescription = pending.mediaType,
+                                tint = WinxPurple,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = pending.originalFileName,
+                                    fontWeight = FontWeight.Bold,
+                                    color = WinxDarkBlue
+                                )
+                                Text(
+                                    text = when (pending.status) {
+                                        "UPLOADING" -> "Uploading…"
+                                        "FAILED" -> "Waiting to retry"
+                                        else -> "Saved offline · Waiting to upload"
+                                    },
+                                    fontSize = 13.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                            TextButton(
+                                enabled = pending.status != "UPLOADING" && removingQueuedId != pending.localId,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        removingQueuedId = pending.localId
+                                        mediaRepository.removeQueuedMedia(context, pending.localId)
+                                            .onSuccess {
+                                                queuedMedia = queuedMedia.filterNot { it.localId == pending.localId }
+                                                mediaError = null
+                                            }
+                                            .onFailure {
+                                                mediaError = it.message ?: "Unable to remove queued media."
+                                            }
+                                        removingQueuedId = null
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Delete,
+                                    contentDescription = "Remove queued media",
+                                    tint = Color.Red
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (mediaItems.isEmpty() && queuedMedia.isEmpty()) {
 
                 item {
 

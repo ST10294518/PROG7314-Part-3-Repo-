@@ -4,6 +4,8 @@ namespace Winx.API.Models
     {
         public int Id { get; set; }
 
+        public Guid? ClientId { get; set; }
+
         public string Title { get; set; } = string.Empty;
 
         public string Location { get; set; } = string.Empty;

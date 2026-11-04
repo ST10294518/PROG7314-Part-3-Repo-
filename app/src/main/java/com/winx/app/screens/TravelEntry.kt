@@ -7,5 +7,6 @@ data class TravelEntry(
     val country: String,
     val date: String,
     val rating: Int,
-    val notes: String
+    val notes: String,
+    val clientId: String? = null
 )
