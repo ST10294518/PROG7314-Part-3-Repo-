@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Winx 
 
 Github Link: https://github.com/EMKNDW/prog7314-g1-2026-prog7314-2026-poe-st10294518.git 
@@ -154,3 +155,6 @@ The app includes a lightweight, in-app translation layer (`WinxLanguage.kt`) tha
 
 
 Group project for **PROG7314 / OPSC7312** at The Independent Institute of Education (IIE).
+=======
+# PROG7314-Part-3-Repo-
+>>>>>>> origin/master
